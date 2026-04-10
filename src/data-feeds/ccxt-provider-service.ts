@@ -367,17 +367,24 @@ export class CcxtFeed implements BaseDataFeed {
       const market = exchange.markets[source.symbol];
       if (market == undefined) continue;
       this.logger.log(`Fetching last price for ${market.id} on ${source.exchange}`);
-      const ticker = await exchange.fetchTicker(market.id);
-      if (ticker === undefined) {
-        this.logger.warn(`Ticker not found for ${market.id} on ${source.exchange}`);
-        continue;
-      }
-      if (ticker.last === undefined) {
-        this.logger.log(`No last price found for ${market.id} on ${source.exchange}`);
-        continue;
-      }
+      try {
+        const ticker = await exchange.fetchTicker(market.id);
+        if (ticker === undefined) {
+          this.logger.warn(`Ticker not found for ${market.id} on ${source.exchange}`);
+          continue;
+        }
+        if (ticker.last === undefined) {
+          this.logger.log(`No last price found for ${market.id} on ${source.exchange}`);
+          continue;
+        }
 
-      this.setPrice(source.exchange, ticker.symbol, ticker.last, ticker.timestamp);
+        this.setPrice(source.exchange, ticker.symbol, ticker.last, ticker.timestamp);
+      } catch (e) {
+        const error = asError(e);
+        this.logger.warn(
+          `Failed to fetch last price for ${source.symbol} (${market.id}) on ${source.exchange}: ${error.message}`
+        );
+      }
     }
   }
 
