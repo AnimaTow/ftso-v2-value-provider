@@ -1,13 +1,13 @@
-import { Logger } from "@nestjs/common";
-import ccxt, { Exchange, Trade } from "ccxt";
-import { FeedId, FeedValueData, FeedVolumeData } from "../dto/provider-requests.dto";
-import { BaseDataFeed } from "./base-feed";
-import { retry, RetryError, sleepFor } from "src/utils/retry";
-import { VolumeStore } from "./volumes";
-import { asError } from "../utils/error";
+import { Logger } from '@nestjs/common';
+import ccxt, { Exchange, Trade } from 'ccxt';
+import { FeedId, FeedValueData, FeedVolumeData } from '../dto/provider-requests.dto';
+import { BaseDataFeed } from './base-feed';
+import { retry, RetryError, sleepFor } from 'src/utils/retry';
+import { VolumeStore } from './volumes';
+import { asError } from '../utils/error';
 
-import prodFeeds from "../config/feeds.json";
-import testFeeds from "../config/test-feeds.json";
+import prodFeeds from '../config/feeds.json';
+import testFeeds from '../config/test-feeds.json';
 
 enum FeedCategory {
   None = 0,
@@ -42,7 +42,10 @@ const RETRY_BACKOFF_MS = 10_000;
 const LAMBDA = process.env.MEDIAN_DECAY ? parseFloat(process.env.MEDIAN_DECAY) : 0.00005;
 const TRADES_HISTORY_SIZE = process.env.TRADES_HISTORY_SIZE ? parseInt(process.env.TRADES_HISTORY_SIZE) : 1000; // 1000 is default in ccxt
 
-const usdtToUsdFeedId: FeedId = { category: FeedCategory.Crypto.valueOf(), name: "USDT/USD" };
+const usdtToUsdFeedId: FeedId = {
+  category: FeedCategory.Crypto.valueOf(),
+  name: 'USDT/USD',
+};
 
 export class CcxtFeed implements BaseDataFeed {
   private readonly logger = new Logger(CcxtFeed.name);
@@ -74,8 +77,10 @@ export class CcxtFeed implements BaseDataFeed {
     this.logger.log(`Initializing exchanges with trade limit ${TRADES_HISTORY_SIZE}`);
     for (const exchangeName of exchangeToSymbols.keys()) {
       try {
-        const exchange: Exchange = new ccxt.pro[exchangeName]({ newUpdates: true });
-        exchange.options["tradesLimit"] = TRADES_HISTORY_SIZE;
+        const exchange: Exchange = new ccxt.pro[exchangeName]({
+          newUpdates: true,
+        });
+        exchange.options['tradesLimit'] = TRADES_HISTORY_SIZE;
         this.exchangeByName.set(exchangeName, exchange);
         loadExchanges.push([exchangeName, retry(async () => exchange.loadMarkets(), 2, RETRY_BACKOFF_MS, this.logger)]);
       } catch (e) {
@@ -91,29 +96,29 @@ export class CcxtFeed implements BaseDataFeed {
         const result = await Promise.allSettled([loadPromise]);
         // result[0] is the settled state of loadPromise
         return { exchangeName, result: result[0] };
-      })
+      }),
     );
 
     for (const { exchangeName, result } of loadResults) {
-      if (result.status === "fulfilled") {
+      if (result.status === 'fulfilled') {
         this.logger.log(`Exchange ${exchangeName} initialized successfully.`);
       } else {
         this.logger.error(
-          `Failed to load markets for ${exchangeName}: ${result.reason}. Removing exchange, restart provider to try again.`
+          `Failed to load markets for ${exchangeName}: ${result.reason}. Removing exchange, restart provider to try again.`,
         );
         exchangeToSymbols.delete(exchangeName);
         this.exchangeByName.delete(exchangeName);
       }
     }
 
-    await this.initWatchTrades(exchangeToSymbols);
+    this.initWatchTrades(exchangeToSymbols);
 
     this.initialized = true;
     this.logger.log(`Initialization done, watching trades...`);
   }
 
   async getValues(feeds: FeedId[]): Promise<FeedValueData[]> {
-    const promises = feeds.map(feed => this.getValue(feed));
+    const promises = feeds.map((feed) => this.getValue(feed));
     return Promise.all(promises);
   }
 
@@ -140,8 +145,8 @@ export class CcxtFeed implements BaseDataFeed {
         }
       }
 
-      if (feed.name.endsWith("/USD") && usdtToUsd !== undefined) {
-        const usdtName = feed.name.replace("/USD", "/USDT");
+      if (feed.name.endsWith('/USD') && usdtToUsd !== undefined) {
+        const usdtName = feed.name.replace('/USD', '/USDT');
         const usdtVolByExchange = this.volumes.get(usdtName);
         if (usdtVolByExchange) {
           for (const [exchange, volStore] of usdtVolByExchange) {
@@ -154,13 +159,16 @@ export class CcxtFeed implements BaseDataFeed {
 
       results.push({
         feed,
-        volumes: Array.from(volMap, ([exchange, volume]) => ({ exchange, volume })),
+        volumes: Array.from(volMap, ([exchange, volume]) => ({
+          exchange,
+          volume,
+        })),
       });
     }
     return results;
   }
 
-  private async initWatchTrades(exchangeToSymbols: Map<string, Set<string>>) {
+  private initWatchTrades(exchangeToSymbols: Map<string, Set<string>>) {
     for (const [exchangeName, symbols] of exchangeToSymbols) {
       const exchange = this.exchangeByName.get(exchangeName);
       if (exchange === undefined) continue;
@@ -179,12 +187,12 @@ export class CcxtFeed implements BaseDataFeed {
     }
   }
 
-  private async watch(exchange: Exchange, marketIds: string[], exchangeName: string) {
+  private watch(exchange: Exchange, marketIds: string[], exchangeName: string) {
     this.logger.log(`Watching trades for ${marketIds} on exchange ${exchangeName}`);
-    if (exchange.has["watchTradesForSymbols"] && exchange.id != "bybit") {
+    if (exchange.has['watchTradesForSymbols'] && exchange.id != 'bybit') {
       void this.watchTradesForSymbols(exchange, marketIds);
-    } else if (exchange.has["watchTrades"]) {
-      marketIds.forEach(marketId => void this.watchTradesForSymbol(exchange, marketId));
+    } else if (exchange.has['watchTrades']) {
+      marketIds.forEach((marketId) => void this.watchTradesForSymbol(exchange, marketId));
     } else {
       this.logger.warn(`Exchange ${exchange.id} does not support watching trades, polling for trades instead`);
       void this.fetchTrades(exchange, marketIds, exchangeName);
@@ -211,14 +219,14 @@ export class CcxtFeed implements BaseDataFeed {
           },
           5,
           2000,
-          this.logger
+          this.logger,
         );
         await sleepFor(1_000); // Wait 1 second before the next fetch
       } catch (e) {
         const error = asError(e);
         if (error instanceof RetryError) {
           this.logger.debug(
-            `Failed to fetch trades after multiple retries for ${exchange.id}/${marketIds}: ${error.cause}, will attempt again in 5 minutes`
+            `Failed to fetch trades after multiple retries for ${exchange.id}/${marketIds}: ${error.cause}, will attempt again in 5 minutes`,
           );
           await sleepFor(300_000); // Wait 5 minutes, we must be rate-limited
         } else throw error;
@@ -228,14 +236,13 @@ export class CcxtFeed implements BaseDataFeed {
 
   private async watchTradesForSymbols(exchange: Exchange, marketIds: string[]) {
     const sinceBySymbol = new Map<string, number>();
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         const trades = await exchange.watchTradesForSymbols(marketIds);
 
         // Some exchange impls don't respect the "since" filter parameter or guarantee trade ordering, so we retrieve the full trade buffer and filter manually.
         const since = sinceBySymbol.get(trades[0].symbol) ?? 0;
-        const newTrades = trades.filter(trade => trade.timestamp > since).sort((a, b) => a.timestamp - b.timestamp);
+        const newTrades = trades.filter((trade) => trade.timestamp > since).sort((a, b) => a.timestamp - b.timestamp);
 
         if (newTrades.length === 0) {
           await sleepFor(1000);
@@ -257,7 +264,6 @@ export class CcxtFeed implements BaseDataFeed {
 
   private async watchTradesForSymbol(exchange: Exchange, marketId: string) {
     let since = undefined;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         const trades = await exchange.watchTrades(marketId, since);
@@ -331,7 +337,7 @@ export class CcxtFeed implements BaseDataFeed {
 
       let price = info.value;
 
-      price = source.symbol.endsWith("USDT") ? await convertToUsd(source.symbol, source.exchange, price) : price;
+      price = source.symbol.endsWith('USDT') ? await convertToUsd(source.symbol, source.exchange, price) : price;
       if (price === undefined) continue;
 
       // Add the price to our list for median calculation
@@ -382,7 +388,7 @@ export class CcxtFeed implements BaseDataFeed {
       } catch (e) {
         const error = asError(e);
         this.logger.warn(
-          `Failed to fetch last price for ${source.symbol} (${market.id}) on ${source.exchange}: ${error.message}`
+          `Failed to fetch last price for ${source.symbol} (${market.id}) on ${source.exchange}: ${error.message}`,
         );
       }
     }
@@ -390,7 +396,7 @@ export class CcxtFeed implements BaseDataFeed {
 
   private weightedMedian(prices: PriceInfo[]): number {
     if (prices.length === 0) {
-      throw new Error("Price list cannot be empty.");
+      throw new Error('Price list cannot be empty.');
     }
 
     prices.sort((a, b) => a.time - b.time);
@@ -399,7 +405,7 @@ export class CcxtFeed implements BaseDataFeed {
     const now = Date.now();
 
     // Calculate exponential weights
-    const weights = prices.map(data => {
+    const weights = prices.map((data) => {
       const timeDifference = now - data.time;
       return Math.exp(-LAMBDA * timeDifference); // Exponential decay
     });
@@ -412,7 +418,7 @@ export class CcxtFeed implements BaseDataFeed {
       return prices[0].value;
     }
 
-    const normalizedWeights = weights.map(weight => weight / weightSum);
+    const normalizedWeights = weights.map((weight) => weight / weightSum);
 
     // Combine prices and weights
     const weightedPrices = prices.map((data, i) => ({
@@ -425,7 +431,7 @@ export class CcxtFeed implements BaseDataFeed {
     // Sort prices by value for median calculation
     weightedPrices.sort((a, b) => a.price - b.price);
 
-    this.logger.debug("Weighted prices:");
+    this.logger.debug('Weighted prices:');
     for (const { price, weight, exchange, staleness: we } of weightedPrices) {
       this.logger.debug(`Price: ${price}, weight: ${weight}, staleness ms: ${we}, exchange: ${exchange}`);
     }
@@ -440,7 +446,7 @@ export class CcxtFeed implements BaseDataFeed {
       }
     }
 
-    this.logger.warn("Unable to calculate weighted median");
+    this.logger.warn('Unable to calculate weighted median');
     return undefined;
   }
 
@@ -450,22 +456,22 @@ export class CcxtFeed implements BaseDataFeed {
   }
 
   private loadConfig() {
-    const config = process.env.NETWORK === "local-test" ? testFeeds : prodFeeds;
+    const config = process.env.NETWORK === 'local-test' ? testFeeds : prodFeeds;
 
     try {
-      if (config.find(feed => feedsEqual(feed.feed, usdtToUsdFeedId)) === undefined) {
-        throw new Error("Must provide USDT feed sources, as it is used for USD conversion.");
+      if (config.find((feed) => feedsEqual(feed.feed, usdtToUsdFeedId)) === undefined) {
+        throw new Error('Must provide USDT feed sources, as it is used for USD conversion.');
       }
 
       for (const cfg of config) {
         this.configByKey.set(this.feedKey(cfg.feed), cfg);
       }
 
-      this.logger.log(`Supported feeds: ${JSON.stringify(config.map(f => f.feed))}`);
+      this.logger.log(`Supported feeds: ${JSON.stringify(config.map((f) => f.feed))}`);
 
       return config;
     } catch (err) {
-      this.logger.error("Error parsing JSON config:", err);
+      this.logger.error('Error parsing JSON config:', err);
       throw err;
     }
   }

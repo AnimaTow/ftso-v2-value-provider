@@ -1,13 +1,12 @@
-import { ILogger } from "./ILogger";
-import { asError, errorString } from "./error";
+import { ILogger } from './ILogger';
+import { asError, errorString } from './error';
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_INITIAL_BACKOFF_MS = 1_000;
 const DEFAULT_BACKOFF_MULTIPLIER = 2;
 
 export async function sleepFor(ms: number) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await new Promise((resolve: any) => {
+  await new Promise<void>((resolve) => {
     setTimeout(() => resolve(), ms);
   });
 }
@@ -19,16 +18,15 @@ export class RetryError extends Error {
 }
 /** Retries the {@link action} {@link maxRetries} times until it completes without an error. */
 export async function retry<T>(
-  action: () => T,
+  action: () => T | Promise<T>,
   maxRetries: number = DEFAULT_MAX_RETRIES,
   initialBackOffMs: number = DEFAULT_INITIAL_BACKOFF_MS,
-  logger?: ILogger
+  logger?: ILogger,
 ): Promise<T> {
   let attempt = 1;
   let backoffMs = initialBackOffMs;
   while (attempt <= maxRetries) {
     try {
-      // eslint-disable-next-line @typescript-eslint/await-thenable
       return await action();
     } catch (e) {
       const error = asError(e);
@@ -43,5 +41,5 @@ export async function retry<T>(
     }
   }
 
-  throw new Error("Unreachable");
+  throw new Error('Unreachable');
 }

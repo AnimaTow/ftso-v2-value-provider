@@ -1,5 +1,5 @@
-import { Trade } from "ccxt";
-import { Logger } from "@nestjs/common";
+import { Trade } from 'ccxt';
+import { Logger } from '@nestjs/common';
 
 const HISTORY_SEC = 3600;
 
@@ -18,7 +18,7 @@ export class VolumeStore {
 
       if (trade.timestamp < this.lastTs) {
         this.logger.debug(
-          `Trade with timestamp ${trade.timestamp} is older than last processed trade ${this.lastTs}, skipping. Trade: ${JSON.stringify(trade)}`
+          `Trade with timestamp ${trade.timestamp} is older than last processed trade ${this.lastTs}, skipping. Trade: ${JSON.stringify(trade)}`,
         );
         continue;
       }
