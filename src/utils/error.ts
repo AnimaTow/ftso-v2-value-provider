@@ -10,7 +10,7 @@ export function asError(e: unknown): Error {
 export function errorString(error: unknown) {
   if (error instanceof Error) {
     const errorDetails = (e: Error) => (e.stack ? `\n${e.stack}` : e.message);
-    const cause = error.cause instanceof Error ? `\n[Caused by]: ${errorDetails(error.cause)}` : "";
+    const cause = error.cause instanceof Error ? `\n[Caused by]: ${errorDetails(error.cause)}` : '';
     return errorDetails(error) + cause;
   } else {
     return `Caught a non-error objet: ${JSON.stringify(error)}`;
