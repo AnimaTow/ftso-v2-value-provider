@@ -858,20 +858,32 @@
     },
     "sources": [
       {
-        "exchange": "mexc",
-        "symbol": "DAI/USDT"
-      },
-      {
-        "exchange": "htx",
-        "symbol": "DAI/USDT"
-      },
-      {
-        "exchange": "bybit",
-        "symbol": "DAI/USDT"
+        "exchange": "coinbase",
+        "symbol": "DAI/USD"
       },
       {
         "exchange": "okx",
-        "symbol": "DAI/USDT"
+        "symbol": "USDS/USDT"
+      },
+      {
+        "exchange": "mexc",
+        "symbol": "USDS/USDT"
+      },
+      {
+        "exchange": "binance",
+        "symbol": "USDS/USDT"
+      },
+      {
+        "exchange": "gate",
+        "symbol": "USDS/USDT"
+      },
+      {
+        "exchange": "bitget",
+        "symbol": "USDS/USDT"
+      },
+      {
+        "exchange": "bingx",
+        "symbol": "USDS/USDT"
       }
     ]
   },
