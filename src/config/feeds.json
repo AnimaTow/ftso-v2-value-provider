@@ -859,7 +859,7 @@
     "sources": [
       {
         "exchange": "coinbase",
-        "symbol": "DAI/USD"
+        "symbol": "USDS/USD"
       },
       {
         "exchange": "okx",
