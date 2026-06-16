@@ -754,28 +754,76 @@
         "symbol": "TON/USDT"
       },
       {
+        "exchange": "binance",
+        "symbol": "GRAM/USDT"
+      },
+      {
         "exchange": "okx",
-        "symbol": "TON/USDT"
+        "symbol": "GRAM/USDT"
       },
       {
         "exchange": "bybit",
-        "symbol": "TON/USDT"
+        "symbol": "GRAM/USDT"
       },
       {
         "exchange": "mexc",
-        "symbol": "TON/USDT"
+        "symbol": "GRAM/USDT"
       },
       {
         "exchange": "kucoin",
-        "symbol": "TON/USDT"
+        "symbol": "GRAM/USDT"
       },
       {
         "exchange": "bitget",
-        "symbol": "TON/USDT"
+        "symbol": "GRAM/USDT"
       },
       {
         "exchange": "htx",
-        "symbol": "TON/USDT"
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "gate",
+        "symbol": "GRAM/USDT"
+      }
+    ]
+  },
+  {
+    "feed": {
+      "category": 1,
+      "name": "GRAM/USD"
+    },
+    "sources": [
+      {
+        "exchange": "binance",
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "okx",
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "bybit",
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "mexc",
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "kucoin",
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "bitget",
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "htx",
+        "symbol": "GRAM/USDT"
+      },
+      {
+        "exchange": "gate",
+        "symbol": "GRAM/USDT"
       }
     ]
   },
